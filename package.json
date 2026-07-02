@@ -1,0 +1,20 @@
+{
+  "name": "jarvis_agent_telegram",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@opencode-ai/sdk": "^1.17.11",
+    "@openrouter/sdk": "^0.13.22",
+    "axios": "^1.18.1",
+    "grammy": "^1.44.0",
+    "localtunnel": "^2.0.2",
+    "openai": "^6.45.0"
+  }
+}
