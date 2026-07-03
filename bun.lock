@@ -5,10 +5,13 @@
     "": {
       "name": "jarvis_agent_telegram",
       "dependencies": {
+        "@hono/node-server": "^2.0.8",
         "@opencode-ai/sdk": "^1.17.11",
         "@openrouter/sdk": "^0.13.22",
         "axios": "^1.18.1",
+        "dotenv": "^17.4.2",
         "grammy": "^1.44.0",
+        "hono": "^4.12.27",
         "localtunnel": "^2.0.2",
         "openai": "^6.45.0",
       },
@@ -22,6 +25,8 @@
   },
   "packages": {
     "@grammyjs/types": ["@grammyjs/types@3.28.0", "", {}, "sha512-4JvXCdxRZHCje0M4gHzLwtB4bLno3WD28xd8CNfk4POWIu73BFnSvGeW6OQ5gPem4eYTEwkD9yDaXssixl6tMQ=="],
+
+    "@hono/node-server": ["@hono/node-server@2.0.8", "", { "peerDependencies": { "hono": "^4" } }, "sha512-GuCWzLxwg218fy1JaHculFsdcuY12hxit83V+algozTPnwhNjLrRL/Alg9OYjLZLoUZ1rw/S4CdTMsnkSKCmFA=="],
 
     "@opencode-ai/sdk": ["@opencode-ai/sdk@1.17.11", "", { "dependencies": { "cross-spawn": "7.0.6" } }, "sha512-UdSwnNM4/cD5rHnI8O7VaHuiwYnsEOglpRPVeeYE2S5Nm1K34ijCyZGDvBecb0ShdBQgn49XvyQWJH6cREsIPw=="],
 
@@ -61,6 +66,8 @@
 
     "delayed-stream": ["delayed-stream@1.0.0", "", {}, "sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ=="],
 
+    "dotenv": ["dotenv@17.4.2", "", {}, "sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw=="],
+
     "dunder-proto": ["dunder-proto@1.0.1", "", { "dependencies": { "call-bind-apply-helpers": "^1.0.1", "es-errors": "^1.3.0", "gopd": "^1.2.0" } }, "sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A=="],
 
     "emoji-regex": ["emoji-regex@8.0.0", "", {}, "sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A=="],
@@ -98,6 +105,8 @@
     "has-tostringtag": ["has-tostringtag@1.0.2", "", { "dependencies": { "has-symbols": "^1.0.3" } }, "sha512-NqADB8VjPFLM2V0VvHUewwwsw0ZWBaIdgo+ieHtK3hasLz4qeCRjYcqfB6AQrBggRKppKF8L52/VqdVsO47Dlw=="],
 
     "hasown": ["hasown@2.0.4", "", { "dependencies": { "function-bind": "^1.1.2" } }, "sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A=="],
+
+    "hono": ["hono@4.12.27", "", {}, "sha512-1yrb/+w6HWQJrUCLkJ2IF5jNIPvvFkblV5RNOYl6bV+OA6p9GLcMpHFFGTosSvHvcAUibuUukRqhlYI4z32C7Q=="],
 
     "https-proxy-agent": ["https-proxy-agent@5.0.1", "", { "dependencies": { "agent-base": "6", "debug": "4" } }, "sha512-dFcAjpTQFgoLMzC2VwU+C/CbS7uRL0lWmxDITmqm7C+7F0Odmj6s9l6alZc6AELXhrnggM2CeWSXHGOdX2YtwA=="],
 

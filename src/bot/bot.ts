@@ -6,10 +6,9 @@ import { filePart } from "./filePart";
 import { textPart } from "./textPart";
 import { getText } from "./extractTextFromResponse";
 import { getTextFromAudio } from "./textTranscription";
-import { imageToText } from "./imageToText";
 
 export const startBot = async (state: State): Promise<void> => {
-  const bot = new Bot(state.getTelegramBotApiKey());
+  const bot = state.getBot();
 
   bot.use(async (ctx: Context, next: NextFunction) => {
     if (String(ctx.from?.id) !== process.env.USER_TELEGRAM_ID) return;
@@ -152,7 +151,9 @@ export const startBot = async (state: State): Promise<void> => {
       );
       console.log(text);
       const response = await sendMessage(state, [textPart(text)]);
-      ctx.reply(getText(response));
+      await ctx.replyWithRichMessage({
+        markdown: getText(response) || "Error",
+      });
     } catch (err) {
       ctx.reply("error occured.");
       console.log(err);

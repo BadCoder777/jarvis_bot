@@ -2,6 +2,8 @@ import type { OpencodeClient } from "@opencode-ai/sdk";
 import prompt from "./systemPrompt.txt";
 import { OpenRouter } from "@openrouter/sdk";
 import ocrPrompt from "./systemOcr.txt";
+import { Bot } from "grammy";
+import { Hono } from "hono";
 
 interface AlbumBucket {
   timer: Timer;
@@ -9,12 +11,14 @@ interface AlbumBucket {
 }
 
 export class State {
+  private bot: Bot;
   private currentSessionId: string;
   private telegramBotApiKey: string;
   private opencodeClient: OpencodeClient;
   private openRouterClient = new OpenRouter({
     apiKey: process.env.OPEN_ROUTER_API_KEY,
   });
+  private hono: Hono;
   private systemPrompt: string;
   private ocrPrompt: string;
   private albumCache = new Map<string, AlbumBucket>();
@@ -31,10 +35,20 @@ export class State {
     this.telegramBotApiKey = telegramBotApiKey;
     this.systemPrompt = prompt;
     this.ocrPrompt = ocrPrompt;
+    this.hono = new Hono();
     this.model = {
       providerID: "opencode",
       modelID: "mimo-v2.5-free",
     };
+    this.bot = new Bot(this.getTelegramBotApiKey());
+  }
+
+  public getHono() {
+    return this.hono;
+  }
+
+  public getBot() {
+    return this.bot;
   }
 
   public getOcrPrompt() {
