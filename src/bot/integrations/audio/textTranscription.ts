@@ -1,6 +1,5 @@
 import type { Bot } from "grammy";
-import type { State } from "../state/state";
-import OpenAI from "openai";
+import type { State } from "../../../state/state";
 
 export const getTextFromAudio = async (
   fileID: string,
