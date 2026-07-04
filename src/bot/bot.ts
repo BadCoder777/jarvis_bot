@@ -6,6 +6,7 @@ import { filePart } from "./filePart";
 import { textPart } from "./textPart";
 import { getText } from "./extractTextFromResponse";
 import { getTextFromAudio } from "./textTranscription";
+import { saveFile } from "./saveDocument";
 
 export const startBot = async (state: State): Promise<void> => {
   const bot = state.getBot();
@@ -158,6 +159,50 @@ export const startBot = async (state: State): Promise<void> => {
       ctx.reply("error occured.");
       console.log(err);
     }
+  });
+
+  bot.on("message:document", async (ctx) => {
+    const document = ctx.message.document;
+    if (!document) return;
+
+    const mediaGroupId = ctx.message.media_group_id;
+
+    if (!state.getAlbumCache().has(mediaGroupId!)) {
+      state.getAlbumCache().set(mediaGroupId!, { timer: null!, fileIds: [] });
+    }
+
+    const bucket = state.getAlbumCache().get(mediaGroupId!)!;
+    bucket.fileIds.push(document.file_id);
+
+    clearTimeout(bucket.timer);
+
+    bucket.timer = setTimeout(async () => {
+      const finalFileIds = bucket.fileIds;
+      state.getAlbumCache().delete(mediaGroupId!);
+
+      try {
+        const userPrompt =
+          ctx.message.caption || "Describe this document in detail.";
+
+        const filePaths = await Promise.all(
+          finalFileIds.map((id) => saveFile(id, bot, ctx)),
+        );
+
+        const response = await sendMessage(state, [
+          textPart(userPrompt),
+          ...filePaths.map((path) => {
+            return textPart(`USER SENT A FILE: ${path}`);
+          }),
+        ]);
+        const text = getText(response);
+        await ctx.replyWithRichMessage({
+          markdown: text || "Error",
+        });
+      } catch (error: any) {
+        console.error("❌ Album pipeline failed:", error.message);
+        await ctx.reply("Failed to process the uploaded album.");
+      }
+    }, 500);
   });
 
   bot.on("message:text", async (ctx) => {
