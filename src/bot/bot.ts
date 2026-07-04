@@ -1,12 +1,12 @@
 import { Bot, Context, type NextFunction } from "grammy";
 import type { State } from "../state/state";
-import { sendMessage } from "./sendMessageToJarvis";
-import { mediaToBase64 } from "./mediaToBase64";
-import { filePart } from "./filePart";
-import { textPart } from "./textPart";
-import { getText } from "./extractTextFromResponse";
-import { getTextFromAudio } from "./textTranscription";
-import { saveFile } from "./saveDocument";
+import { sendMessage } from "./utils/agent/sendMessageToJarvis";
+import { mediaToBase64 } from "./utils/system/mediaToBase64";
+import { filePart } from "./utils/agent/filePart";
+import { textPart } from "./utils/agent/textPart";
+import { getText } from "./utils/agent/extractTextFromResponse";
+import { getTextFromAudio } from "./integrations/audio/textTranscription";
+import { saveFile } from "./utils/system/saveDocument";
 
 export const startBot = async (state: State): Promise<void> => {
   const bot = state.getBot();
