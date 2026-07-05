@@ -1,4 +1,4 @@
-import { Bot, Context, type NextFunction } from "grammy";
+import { Bot, Context, InlineKeyboard, type NextFunction } from "grammy";
 import type { State } from "../state/state";
 import { sendMessage } from "./utils/agent/sendMessageToJarvis";
 import { mediaToBase64 } from "./utils/system/mediaToBase64";
@@ -7,6 +7,7 @@ import { textPart } from "./utils/agent/textPart";
 import { getText } from "./utils/agent/extractTextFromResponse";
 import { getTextFromAudio } from "./integrations/audio/textTranscription";
 import { saveFile } from "./utils/system/saveDocument";
+import { genModelsKeyboard } from "./utils/telegram/genModelsKeyboard";
 
 export const startBot = async (state: State): Promise<void> => {
   const bot = state.getBot();
@@ -15,23 +16,33 @@ export const startBot = async (state: State): Promise<void> => {
     if (String(ctx.from?.id) !== process.env.USER_TELEGRAM_ID) return;
     await next();
   });
+  bot.use(async (ctx: Context, next: NextFunction) => {
+    const currentSession = state.getCurrentSessionId();
+    if (!currentSession) {
+      try {
+        const session = await opencode.session.create();
+        state.setCurrentSessionId(session.data!.id);
+      } catch (error) {
+        ctx.reply("Error while creating the session");
+        console.log("error while creatin a session: " + error);
+      }
+    }
+    next();
+  });
 
   const opencode = state.getOpencodeClient();
 
   await bot.api.setMyCommands([
     { command: "start", description: "Start the bot" },
-    { command: "clear", description: "Clears the context" },
-    { command: "test", description: "Test for developer" },
-    { command: "id", description: "Get my telegram ID" },
+    { command: "clear", description: "Clear the context" },
+    { command: "model", description: "Choose a model" },
+    { command: "id", description: "Get telegram ID" },
   ]);
 
   bot.command("start", async (ctx: Context): Promise<void> => {
-    const session = await opencode.session.create();
-    state.setCurrentSessionId(session.data!.id);
     const response = await sendMessage(state, [
-      { type: "text", text: "Джарвис.." },
+      { type: "text", text: "Джарвис" },
     ]);
-    console.log(response);
     const text = getText(response);
     await ctx.replyWithRichMessage({
       markdown: text || "hi Sir",
@@ -56,27 +67,10 @@ export const startBot = async (state: State): Promise<void> => {
     ctx.reply(String(ctx.from?.id));
   });
 
-  bot.command("test", async (ctx) => {
-    const response = await opencode.session.prompt({
-      path: { id: state.getCurrentSessionId() },
-      body: {
-        model: { providerID: "opencode", modelID: "mimo-v2.5-free" },
-        system: "You are an ocr module",
-        parts: [
-          { type: "text", text: "What can you see on the picture?" },
-          {
-            type: "file",
-            url: "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.naturalhistoryonthenet.com%2Fwp-content%2Fuploads%2F2016%2F12%2FDomestic-Cat.jpg&f=1&nofb=1&ipt=89eb3eec4db330f35d4b346a16153916468483537b96449d884bbe255d65b049",
-            mime: "image/jpeg",
-          },
-        ],
-      },
+  bot.command("model", async (ctx) => {
+    ctx.reply("Choose your model:", {
+      reply_markup: genModelsKeyboard(state),
     });
-    const text = response.data?.parts
-      .filter((part: any) => part.type === "text")
-      .map((part: any) => part.text)
-      .join("\n");
-    await ctx.replyWithRichMessage({ markdown: text || "No response." });
   });
 
   bot.on("message:photo", async (ctx) => {
@@ -211,6 +205,20 @@ export const startBot = async (state: State): Promise<void> => {
     await ctx.replyWithRichMessage({
       markdown: text,
     });
+  });
+
+  bot.callbackQuery(/^model_(.+)$/, async (ctx) => {
+    const selectedId = ctx.match[1];
+    if (!selectedId) {
+      await ctx.reply("No model id provided");
+      return;
+    }
+
+    state.setModel(selectedId);
+
+    await ctx.answerCallbackQuery({ text: "Good :)" });
+
+    await ctx.deleteMessage();
   });
 
   bot.start();

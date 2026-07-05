@@ -1,9 +1,11 @@
 import type { OpencodeClient } from "@opencode-ai/sdk";
-import prompt from "./systemPrompt.txt";
+import prompt from "../data/systemPrompt.txt";
 import { OpenRouter } from "@openrouter/sdk";
-import ocrPrompt from "./systemOcr.txt";
+import ocrPrompt from "../data/systemOcr.txt";
 import { Bot } from "grammy";
 import { Hono } from "hono";
+import type { IModel } from "../types/model.type";
+import { MODELS } from "../data/models.data";
 
 interface AlbumBucket {
   timer: Timer;
@@ -23,7 +25,7 @@ export class State {
   private ocrPrompt: string;
   private albumCache = new Map<string, AlbumBucket>();
   private tunnelURL: string | null = null;
-  private model: { providerID: string; modelID: string };
+  private model: IModel; //{ providerID: string; modelID: string };
 
   public constructor(
     currentSessionId: string | null,
@@ -36,10 +38,7 @@ export class State {
     this.systemPrompt = prompt;
     this.ocrPrompt = ocrPrompt;
     this.hono = new Hono();
-    this.model = {
-      providerID: "opencode",
-      modelID: "mimo-v2.5-free",
-    };
+    this.model = MODELS[0]!;
     this.bot = new Bot(this.getTelegramBotApiKey());
   }
 
@@ -99,7 +98,9 @@ export class State {
     return this.model;
   }
 
-  public setModel(model: { providerID: string; modelID: string }) {
-    this.model = model;
+  public setModel(id: string) {
+    const newModel = MODELS.find((item) => item.id === +id);
+    if (!newModel) return new Error("Model was not found");
+    this.model = newModel;
   }
 }
