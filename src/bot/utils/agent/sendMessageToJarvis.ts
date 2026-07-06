@@ -7,13 +7,17 @@ export const sendMessage = async (
   parts: Part[],
   model: IModel = state.getModel(),
 ) => {
-  const response = await state.getOpencodeClient().session.prompt({
-    path: { id: state.getCurrentSessionId() },
-    body: {
-      model: { modelID: model.modelID, providerID: model.provider.id },
-      system: state.getSystemPrompt(),
-      parts,
-    },
-  });
-  return response;
+  try {
+    const response = await state.getOpencodeClient().session.prompt({
+      path: { id: state.getCurrentSessionId() },
+      body: {
+        model: { modelID: model.modelID, providerID: model.provider.id },
+        system: state.getSystemPrompt(),
+        parts,
+      },
+    });
+    return response;
+  } catch (error) {
+    state.getBot().api.sendMessage(state.getTelegramId(), "Opencode Error.");
+  }
 };

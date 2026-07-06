@@ -16,6 +16,7 @@ export class State {
   private bot: Bot;
   private currentSessionId: string;
   private telegramBotApiKey: string;
+  private telegramId: string;
   private opencodeClient: OpencodeClient;
   private openRouterClient = new OpenRouter({
     apiKey: process.env.OPEN_ROUTER_API_KEY,
@@ -36,10 +37,15 @@ export class State {
     this.opencodeClient = opencodeClient;
     this.telegramBotApiKey = telegramBotApiKey;
     this.systemPrompt = prompt;
+    this.telegramId = process.env.USER_TELEGRAM_ID!;
     this.ocrPrompt = ocrPrompt;
     this.hono = new Hono();
     this.model = MODELS[0]!;
     this.bot = new Bot(this.getTelegramBotApiKey());
+  }
+
+  public getTelegramId() {
+    return this.telegramId;
   }
 
   public getHono() {

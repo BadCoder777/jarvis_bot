@@ -8,6 +8,7 @@ import { getText } from "./utils/agent/extractTextFromResponse";
 import { getTextFromAudio } from "./integrations/audio/textTranscription";
 import { saveFile } from "./utils/system/saveDocument";
 import { genModelsKeyboard } from "./utils/telegram/genModelsKeyboard";
+import { sendTgMessage } from "./utils/telegram/sendTgMessage";
 
 export const startBot = async (state: State): Promise<void> => {
   const bot = state.getBot();
@@ -40,13 +41,7 @@ export const startBot = async (state: State): Promise<void> => {
   ]);
 
   bot.command("start", async (ctx: Context): Promise<void> => {
-    const response = await sendMessage(state, [
-      { type: "text", text: "Джарвис" },
-    ]);
-    const text = getText(response);
-    await ctx.replyWithRichMessage({
-      markdown: text || "hi Sir",
-    });
+    await sendTgMessage(ctx, "You started Jarvis successfully!");
   });
 
   bot.command("clear", async (ctx: Context): Promise<void> => {
@@ -79,26 +74,6 @@ export const startBot = async (state: State): Promise<void> => {
 
     const mediaGroupId = ctx.message.media_group_id;
 
-    /* if (!mediaGroupId) {
-      try {
-        const userPrompt =
-          ctx.message.caption || "Describe this image in detail.";
-        const dataUrl = await mediaToBase64(photo.file_id, bot);
-        const response = await sendMessage(state, [
-          filePart(dataUrl, "image/jpeg"),
-          textPart(userPrompt),
-        ]);
-        //console.log(JSON.stringify(response));
-        const text = getText(response);
-        await ctx.replyWithRichMessage({
-          markdown: text || "hi Sir",
-        });
-      } catch (error: any) {
-        console.error("❌ Single image pipeline failed:", error.message);
-        ctx.reply("An error occured.");
-      }
-      } */
-
     if (!state.getAlbumCache().has(mediaGroupId!)) {
       state.getAlbumCache().set(mediaGroupId!, { timer: null!, fileIds: [] });
     }
@@ -127,9 +102,7 @@ export const startBot = async (state: State): Promise<void> => {
           }),
         ]);
         const text = getText(response);
-        await ctx.replyWithRichMessage({
-          markdown: text || "Error",
-        });
+        await sendTgMessage(ctx, text);
       } catch (error: any) {
         console.error("❌ Album pipeline failed:", error.message);
         await ctx.reply("Failed to process the uploaded album.");
@@ -146,9 +119,8 @@ export const startBot = async (state: State): Promise<void> => {
       );
       console.log(text);
       const response = await sendMessage(state, [textPart(text)]);
-      await ctx.replyWithRichMessage({
-        markdown: getText(response) || "Error",
-      });
+      const textAnswer = getText(response);
+      await sendTgMessage(ctx, textAnswer);
     } catch (err) {
       ctx.reply("error occured.");
       console.log(err);
@@ -189,9 +161,7 @@ export const startBot = async (state: State): Promise<void> => {
           }),
         ]);
         const text = getText(response);
-        await ctx.replyWithRichMessage({
-          markdown: text || "Error",
-        });
+        await sendTgMessage(ctx, text);
       } catch (error: any) {
         console.error("❌ Album pipeline failed:", error.message);
         await ctx.reply("Failed to process the uploaded album.");
@@ -202,9 +172,7 @@ export const startBot = async (state: State): Promise<void> => {
   bot.on("message:text", async (ctx) => {
     const response = await sendMessage(state, [textPart(ctx.message.text)]);
     const text = getText(response);
-    await ctx.replyWithRichMessage({
-      markdown: text,
-    });
+    await sendTgMessage(ctx, text);
   });
 
   bot.callbackQuery(/^model_(.+)$/, async (ctx) => {
