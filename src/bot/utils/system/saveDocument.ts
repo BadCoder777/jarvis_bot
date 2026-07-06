@@ -1,10 +1,8 @@
 import { Bot } from "grammy";
 import { join } from "node:path";
 
-export const saveFile = async (fileID: string, bot: Bot, ctx: any) => {
+export const saveFile = async (fileID: string, fileName: string, bot: Bot) => {
   const fileMetadata = await bot.api.getFile(fileID);
-  const document = ctx.message.document;
-  const fileName = document.file_name || `file_${Date.now()}`;
 
   if (!fileMetadata.file_path) {
     throw new Error("Telegram не предоставил путь для скачивания файла");
@@ -27,8 +25,8 @@ export const saveFile = async (fileID: string, bot: Bot, ctx: any) => {
 
   await bot.api.sendMessage(
     process.env.USER_TELEGRAM_ID!,
-    `✅ Файл успешно сохранен на диск как: ${fileName}`,
+    `✅ File saved as: ${fileName}`,
   );
-  console.log(`[Storage] Файл сохранен в: ${targetPath}`);
+  console.log(`[Storage] File saved to: ${targetPath}`);
   return targetPath;
 };

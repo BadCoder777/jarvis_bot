@@ -9,6 +9,8 @@ import { getTextFromAudio } from "./integrations/audio/textTranscription";
 import { saveFile } from "./utils/system/saveDocument";
 import { genModelsKeyboard } from "./utils/telegram/genModelsKeyboard";
 import { sendTgMessage } from "./utils/telegram/sendTgMessage";
+import { handleSingleFile } from "./utils/system/handleSingleFile";
+import { handleSinglePhoto } from "./utils/system/handleSinglePhoto";
 
 export const startBot = async (state: State): Promise<void> => {
   const bot = state.getBot();
@@ -69,45 +71,55 @@ export const startBot = async (state: State): Promise<void> => {
   });
 
   bot.on("message:photo", async (ctx) => {
-    const photo = ctx.message.photo.pop();
+    const photo = ctx.message.photo[ctx.message.photo.length - 1];
     if (!photo) return;
 
     const mediaGroupId = ctx.message.media_group_id;
 
-    if (!state.getAlbumCache().has(mediaGroupId!)) {
-      state.getAlbumCache().set(mediaGroupId!, { timer: null!, fileIds: [] });
+    if (!mediaGroupId) {
+      return handleSinglePhoto(ctx, photo.file_id, ctx.message.caption, state);
     }
 
-    const bucket = state.getAlbumCache().get(mediaGroupId!)!;
+    const cache = state.getPhotoCache();
+
+    if (!cache.has(mediaGroupId)) {
+      cache.set(mediaGroupId, { timer: null!, caption: null, fileIds: [] });
+    }
+
+    const bucket = cache.get(mediaGroupId)!;
+
+    if (ctx.message.caption) {
+      bucket.caption = ctx.message.caption;
+    }
+
     bucket.fileIds.push(photo.file_id);
 
     clearTimeout(bucket.timer);
 
     bucket.timer = setTimeout(async () => {
-      const finalFileIds = bucket.fileIds;
-      state.getAlbumCache().delete(mediaGroupId!);
+      const { fileIds, caption } = bucket;
+      cache.delete(mediaGroupId);
 
       try {
         const userPrompt =
-          ctx.message.caption || "Describe this image in detail.";
+          caption || "FOR AGENT: Ask user what to do with this context.";
 
         const dataUrls = await Promise.all(
-          finalFileIds.map((id) => mediaToBase64(id, bot)),
+          fileIds.map((id) => mediaToBase64(id, bot)),
         );
 
         const response = await sendMessage(state, [
           textPart(userPrompt),
-          ...dataUrls.map((url) => {
-            return filePart(url, "image/jpeg");
-          }),
+          ...dataUrls.map((url) => filePart(url, "image/jpeg")),
         ]);
+
         const text = getText(response);
         await sendTgMessage(ctx, text);
       } catch (error: any) {
-        console.error("❌ Album pipeline failed:", error.message);
-        await ctx.reply("Failed to process the uploaded album.");
+        console.error("❌ Photo album pipeline failed:", error.message);
+        await ctx.reply("Failed to process the uploaded image album.");
       }
-    }, 500);
+    }, 600);
   });
 
   bot.on("message:voice", async (ctx) => {
@@ -133,40 +145,57 @@ export const startBot = async (state: State): Promise<void> => {
 
     const mediaGroupId = ctx.message.media_group_id;
 
-    if (!state.getAlbumCache().has(mediaGroupId!)) {
-      state.getAlbumCache().set(mediaGroupId!, { timer: null!, fileIds: [] });
+    if (!mediaGroupId) {
+      return handleSingleFile(
+        ctx,
+        document.file_id,
+        document.file_name,
+        ctx.message.caption,
+        state,
+      );
     }
 
-    const bucket = state.getAlbumCache().get(mediaGroupId!)!;
-    bucket.fileIds.push(document.file_id);
+    const cache = state.getAlbumCache();
+
+    if (!cache.has(mediaGroupId)) {
+      cache.set(mediaGroupId, { timer: null!, caption: null, files: [] });
+    }
+
+    const bucket = cache.get(mediaGroupId)!;
+
+    if (ctx.message.caption) {
+      bucket.caption = ctx.message.caption;
+    }
+
+    bucket.files.push({
+      id: document.file_id,
+      name: document.file_name || `file_${document.file_id}`,
+    });
 
     clearTimeout(bucket.timer);
 
     bucket.timer = setTimeout(async () => {
-      const finalFileIds = bucket.fileIds;
-      state.getAlbumCache().delete(mediaGroupId!);
+      const { files, caption } = bucket;
+      cache.delete(mediaGroupId);
 
       try {
-        const userPrompt =
-          ctx.message.caption || "Describe this document in detail.";
-
+        const userPrompt = caption || "Describe this document in detail.";
         const filePaths = await Promise.all(
-          finalFileIds.map((id) => saveFile(id, bot, ctx)),
+          files.map((file) => saveFile(file.id, file.name, bot)),
         );
 
         const response = await sendMessage(state, [
           textPart(userPrompt),
-          ...filePaths.map((path) => {
-            return textPart(`USER SENT A FILE: ${path}`);
-          }),
+          ...filePaths.map((path) => textPart(`USER SENT A FILE: ${path}`)),
         ]);
+
         const text = getText(response);
         await sendTgMessage(ctx, text);
       } catch (error: any) {
         console.error("❌ Album pipeline failed:", error.message);
         await ctx.reply("Failed to process the uploaded album.");
       }
-    }, 500);
+    }, 600);
   });
 
   bot.on("message:text", async (ctx) => {

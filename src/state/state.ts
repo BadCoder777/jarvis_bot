@@ -9,11 +9,19 @@ import { MODELS } from "../data/models.data";
 
 interface AlbumBucket {
   timer: Timer;
+  caption: string | null;
+  files: Array<{ id: string; name: string }>;
+}
+
+interface PhotoBucket {
+  timer: Timer;
+  caption: string | null;
   fileIds: string[];
 }
 
 export class State {
   private bot: Bot;
+  private isBusy: boolean = false;
   private currentSessionId: string;
   private telegramBotApiKey: string;
   private telegramId: string;
@@ -25,8 +33,9 @@ export class State {
   private systemPrompt: string;
   private ocrPrompt: string;
   private albumCache = new Map<string, AlbumBucket>();
+  private photoCache = new Map<string, PhotoBucket>();
   private tunnelURL: string | null = null;
-  private model: IModel; //{ providerID: string; modelID: string };
+  private model: IModel;
 
   public constructor(
     currentSessionId: string | null,
@@ -42,6 +51,18 @@ export class State {
     this.hono = new Hono();
     this.model = MODELS[0]!;
     this.bot = new Bot(this.getTelegramBotApiKey());
+  }
+
+  public getPhotoCache() {
+    return this.photoCache;
+  }
+
+  public getIsBusy() {
+    return this.isBusy;
+  }
+
+  public setIsBusy(value: boolean) {
+    this.isBusy = value;
   }
 
   public getTelegramId() {
