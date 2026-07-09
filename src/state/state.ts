@@ -6,6 +6,7 @@ import { Bot } from "grammy";
 import { Hono } from "hono";
 import type { IModel } from "../types/model.type";
 import { MODELS } from "../data/models.data";
+import {QdrantClient} from '@qdrant/js-client-rest';
 
 interface AlbumBucket {
   timer: Timer;
@@ -21,6 +22,7 @@ interface PhotoBucket {
 
 export class State {
   private bot: Bot;
+  private qdrant = new QdrantClient({url: "http://127.0.0.1:6333"})
   private isBusy: boolean = false;
   private currentSessionId: string;
   private telegramBotApiKey: string;
@@ -51,6 +53,10 @@ export class State {
     this.hono = new Hono();
     this.model = MODELS[0]!;
     this.bot = new Bot(this.getTelegramBotApiKey());
+  }
+
+  public getQdrant() {
+    return this.qdrant
   }
 
   public getPhotoCache() {
@@ -105,13 +111,9 @@ export class State {
     return this.systemPrompt;
   }
 
-  public addAlbumCache() {}
-
   public getAlbumCache() {
     return this.albumCache;
   }
-
-  public deleteAlbomCash(id: string) {}
 
   public setTunnelUrl(url: string) {
     this.tunnelURL = url;
